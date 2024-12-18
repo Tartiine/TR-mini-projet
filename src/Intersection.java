@@ -1,39 +1,58 @@
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Intersection extends Thread {
-    //CONSTANTS
-    public static final int LENGTH = 128;
-    public static final int LIGHT_DURATION = 10000;
-
     //ATTRIBUTES
-    public static Semaphore intersection = new Semaphore(1);
+    public static Lock intersectionLock = new ReentrantLock();
+    public static TrafficLight verticalLight;
+    public static TrafficLight horizontalLight;
 
-    public static TrafficLight trafficLight1;
-    public static TrafficLight trafficLight2;
+    private final long cycleTime;
 
     //METHODS
-    public Intersection() {
-        trafficLight1 = new TrafficLight();
-        trafficLight2 = new TrafficLight();
+    public Intersection(long cycleTime) {
+        this.cycleTime = cycleTime;
+        verticalLight = new TrafficLight(LightState.GREEN);
+        horizontalLight = new TrafficLight(LightState.RED);
+
+    }
+
+    public void acquireIntersection() {
+        intersectionLock.lock();
+    }
+
+    public void releaseIntersection() {
+        intersectionLock.unlock();
     }
 
     @Override
     public void run() {
         while (true) {
             try {
-                Thread.sleep(LIGHT_DURATION);
+                Thread.sleep(cycleTime);
+
+                verticalLight.setLightState(LightState.RED);
+                horizontalLight.setLightState(LightState.GREEN);
+
+                Thread.sleep(cycleTime);
+
+                verticalLight.setLightState(LightState.GREEN);
+                horizontalLight.setLightState(LightState.RED);
+
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            if (trafficLight1.isGreen()) {
-                trafficLight1.setRed();
-                trafficLight2.setGreen();
-            } else {
-                trafficLight1.setGreen();
-                trafficLight2.setRed();
+                break;
             }
         }
     }
 
+
     //GETTERS & SETTERS
+    public TrafficLight getVerticalLight() {
+        return verticalLight;
+    }
+
+    public TrafficLight getHorizontalLight() {
+        return horizontalLight;
+    }
 }
