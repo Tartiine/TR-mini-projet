@@ -1,9 +1,19 @@
+### Maven ###
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Maven Wrapper
+.mvn/
+mvnw
+mvnw.cmd
+
 ### IntelliJ IDEA ###
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 .idea
-TR-mini-projet.iml
+*.iml
 
 ### Eclipse ###
 .apt_generated
@@ -29,3 +39,9 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Windows OS ###
+Thumbs.db
+
+### Logs ###
+*.log
