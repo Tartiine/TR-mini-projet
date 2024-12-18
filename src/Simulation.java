@@ -1,36 +1,17 @@
 public class Simulation {
     //ATTRIBUTES
-    public static Intersection intersection = new Intersection(2000);
+    public static Intersection intersection = new Intersection();
 
     //METHODS
     public static void main(String[] args) {
-        Thread intersectionThread = new Thread(intersection);
-        intersectionThread.start();
+        TrafficLight tl1 = intersection.getVerticalLight();
+        TrafficLight tl2 = intersection.getHorizontalLight();
 
-        for (int i = 0; i < 10; i++) {
-            if (i % 2 == 0) {
-                TrafficLight light = intersection.getVerticalLight(); // Assign vertical light
-                Car car = new Car(intersection, light);
+        CarGenerator cg1 = new CarGenerator(intersection, tl1);
+        CarGenerator cg2 = new CarGenerator(intersection, tl2);
 
-                // Add car to the light's waiting list
-                light.addCar(car);
-
-                Thread carThread = new Thread(car, "Car-V-" + i);
-                carThread.start();
-            } else {
-                TrafficLight light = intersection.getHorizontalLight(); // Assign horizontal light
-                Car car = new Car(intersection, light);
-
-                // Add car to the light's waiting list
-                light.addCar(car);
-
-                Thread carThread = new Thread(car, "Car-H-" + i);
-                carThread.start();
-            }
-
-            try {
-                Thread.sleep((long)(Math.random()*3000));
-            } catch (InterruptedException e) {}
-        }
+        intersection.start();
+        cg1.start();
+        cg2.start();
     }
 }

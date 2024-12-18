@@ -7,11 +7,10 @@ public class Intersection extends Thread {
     public static TrafficLight verticalLight;
     public static TrafficLight horizontalLight;
 
-    private final long cycleTime;
+    private final long cycleTime = 3000;
 
     //METHODS
-    public Intersection(long cycleTime) {
-        this.cycleTime = cycleTime;
+    public Intersection() {
         verticalLight = new TrafficLight(LightState.GREEN);
         horizontalLight = new TrafficLight(LightState.RED);
 
