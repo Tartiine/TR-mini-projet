@@ -1,4 +1,3 @@
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -35,10 +34,14 @@ public class Intersection extends Thread {
                 verticalLight.setLightState(LightState.RED);
                 horizontalLight.setLightState(LightState.GREEN);
 
+                System.out.println("SWITCH 1");
+
                 Thread.sleep(cycleTime);
 
                 verticalLight.setLightState(LightState.GREEN);
                 horizontalLight.setLightState(LightState.RED);
+
+                System.out.println("SWITCH 2");
 
             } catch (InterruptedException e) {
                 break;
