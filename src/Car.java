@@ -1,4 +1,4 @@
-class Car implements Runnable {
+class Car extends Thread {
     private final TrafficLight assignedLight;
     private final Intersection intersection;
     private boolean passed = false;
@@ -16,6 +16,7 @@ class Car implements Runnable {
 
             intersection.acquireIntersection();
             try {
+                System.out.println("Car is crossing");
                 assignedLight.removeCar();
 
                 Thread.sleep(500); 
