@@ -204,7 +204,7 @@ public class Simulation extends Application {
         double startY;
     
         if (car.isVertical()) {
-            startX = 5* TILE_SIZE; 
+            startX = 6* TILE_SIZE; 
             startY = 11*TILE_SIZE;   
         } else {
             startX = -TILE_SIZE;   
@@ -231,12 +231,11 @@ public class Simulation extends Application {
     }
 
     private void animateCarCrossing(ImageView carView, boolean isVertical) {
-        double crossingDistance = TILE_SIZE * 7;
         TranslateTransition transition = new TranslateTransition(Duration.millis(1000), carView);
         if (isVertical) {
-            transition.setByY(crossingDistance);
+            transition.setByY(TILE_SIZE);
         } else {
-            transition.setByX(crossingDistance);
+            transition.setByX(11*TILE_SIZE);
         }
 
         transition.setOnFinished(event -> Platform.runLater(() -> root.getChildren().remove(carView)));
