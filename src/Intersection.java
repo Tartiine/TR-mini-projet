@@ -7,7 +7,7 @@ public class Intersection extends Thread {
     public static TrafficLight verticalLight;
     public static TrafficLight horizontalLight;
 
-    private final long cycleTime = 3000;
+    private final long cycleTime = 5000;
 
     //METHODS
     public Intersection() {
@@ -57,4 +57,5 @@ public class Intersection extends Thread {
     public TrafficLight getHorizontalLight() {
         return horizontalLight;
     }
+    
 }

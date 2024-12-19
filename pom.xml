@@ -49,7 +49,7 @@
           </execution>
         </executions>
         <configuration>
-          <mainClass>View</mainClass>
+          <mainClass>Simulation</mainClass>
         </configuration>
       </plugin>
 

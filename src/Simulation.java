@@ -1,3 +1,4 @@
+import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -5,8 +6,11 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -16,7 +20,7 @@ public class Simulation extends Application {
     // ATTRIBUTES
     public static Intersection intersection = new Intersection();
     private static final double TILE_SIZE = 64;
-    private final Map<Integer, ImageView> carViews = new HashMap<>();
+    private Map<Car, ImageView> carMap = new HashMap<>();
     private Pane root;
     private ImageView verticalRedLightView;
     private ImageView verticalGreenLightView;
@@ -27,17 +31,17 @@ public class Simulation extends Application {
     // METHODS
     @Override
     public void start(Stage primaryStage) {
-        TrafficLight tl1 = intersection.getVerticalLight();
-        TrafficLight tl2 = intersection.getHorizontalLight();
+        TrafficLight verticalTrafficLight = intersection.getVerticalLight();
+        TrafficLight horizontalTrafficLight = intersection.getHorizontalLight();
 
-        CarGenerator cg1 = new CarGenerator(intersection, tl1);
-        CarGenerator cg2 = new CarGenerator(intersection, tl2);
+        CarGenerator verticalCarGenerator = new CarGenerator(intersection, verticalTrafficLight, Orientation.VERTICAL);
+        CarGenerator horizontalCarGenerator = new CarGenerator(intersection, horizontalTrafficLight, Orientation.HORIZONTAL);
 
         setupUI(primaryStage);
 
         intersection.start();
-        cg1.start();
-        cg2.start();
+        verticalCarGenerator.start();
+        horizontalCarGenerator.start();
 
         initScheduler();
     }
@@ -75,7 +79,8 @@ public class Simulation extends Application {
         verticalGreenLightView = new ImageView(greenLightImg);
         verticalGreenLightView.setX((4 * TILE_SIZE) - TILE_SIZE);
         verticalGreenLightView.setY((5 * TILE_SIZE) + TILE_SIZE);
-        verticalGreenLightView.setVisible(false); // Initially red
+        verticalGreenLightView.setRotate(90);
+        verticalGreenLightView.setVisible(false);
         root.getChildren().add(verticalGreenLightView);
 
         horizontalRedLightView = new ImageView(redLightImg);
@@ -86,7 +91,7 @@ public class Simulation extends Application {
         horizontalGreenLightView = new ImageView(greenLightImg);
         horizontalGreenLightView.setX((5 * TILE_SIZE) + TILE_SIZE);
         horizontalGreenLightView.setY((5 * TILE_SIZE) + TILE_SIZE);
-        horizontalGreenLightView.setVisible(false); // Initially red
+        horizontalGreenLightView.setVisible(false);
         root.getChildren().add(horizontalGreenLightView);
 
         Scene scene = new Scene(root, TILE_SIZE * gridSize, TILE_SIZE * gridSize);
@@ -157,36 +162,26 @@ public class Simulation extends Application {
     }
 
     private void updateView() {
-        boolean verticalGreen = intersection.getVerticalLight().isGreen();
-        boolean horizontalGreen = intersection.getHorizontalLight().isGreen();
+        TrafficLight verticalLight = intersection.getVerticalLight();
+        TrafficLight horizontalLight = intersection.getHorizontalLight();
+        boolean verticalGreen = verticalLight.isGreen();
+        boolean horizontalGreen = horizontalLight.isGreen();
+
         updateTrafficLights(verticalGreen, horizontalGreen);
 
-        intersection.getVerticalLight().getCars().forEach(car -> {
-            double newX = car.getPosition() * TILE_SIZE; 
-            double newY = car.getLane() * TILE_SIZE; 
-            updateCarPosition(car.getId(), newX, newY);
-        });
-    
-        intersection.getHorizontalLight().getCars().forEach(car -> {
-            double newX = car.getLane() * TILE_SIZE; 
-            double newY = car.getPosition() * TILE_SIZE; 
-            updateCarPosition(car.getId(), newX, newY);
-        });
-    
-        synchronized (intersection) {
-            if (!intersection.isOccupied()) {
-                if (verticalGreen) {
-                    moveCar(intersection.getVerticalLight());
-                }
-                if (horizontalGreen) {
-                    moveCar(intersection.getHorizontalLight());
-                }
+        addCarsToView(verticalLight);
+        addCarsToView(horizontalLight);
+    }
+
+
+    private void addCarsToView(TrafficLight trafficLight) {
+        int position = 0;
+        for (Car car : trafficLight.getAllCars()) {
+            if (!carMap.containsKey(car)) {
+                addCar(car, position);
             }
+            position++;
         }
-    
-        intersection.getCars().stream()
-                .filter(Car::hasPassed)
-                .forEach(car -> removeCar(car.getId()));
     }
     
 
@@ -200,27 +195,77 @@ public class Simulation extends Application {
         });
     }
 
-    public void addCar(int carId) {
+    public void addCar(Car car, int queuePosition) {
         Image carImage = new Image("file:res/car.png");
         ImageView carView = new ImageView(carImage);
-        carViews.put(carId, carView);
-        Platform.runLater(() -> root.getChildren().add(carView));
+        carMap.put(car, carView);
+    
+        double startX;
+        double startY;
+    
+        if (car.isVertical()) {
+            startX = 5* TILE_SIZE; 
+            startY = 11*TILE_SIZE;   
+        } else {
+            startX = -TILE_SIZE;   
+            startY = 5 * TILE_SIZE;
+            carView.setRotate(90); 
+        }
+
+        double targetX = car.isVertical() ? 5 * TILE_SIZE : (4 - queuePosition) * TILE_SIZE;
+        double targetY = car.isVertical() ? (5 + queuePosition) * TILE_SIZE : 5 * TILE_SIZE;
+    
+        carView.setX(startX);
+        carView.setY(startY);
+    
+        car.isCrossingProperty().addListener((obs, wasCrossing, isNowCrossing) -> {
+            if (isNowCrossing) {
+                animateCarCrossing(carView, car.isVertical());
+            }
+        });
+    
+        Platform.runLater(() -> {
+            root.getChildren().add(carView);
+            //animateCarToQueue(carView, targetX, targetY);
+        });
     }
 
-    public void updateCarPosition(int carId, double x, double y) {
-        ImageView carView = carViews.get(carId);
-        if (carView != null) {
-            Platform.runLater(() -> {
-                carView.setX(x);
-                carView.setY(y);
-            });
+    private void animateCarCrossing(ImageView carView, boolean isVertical) {
+        double crossingDistance = TILE_SIZE * 7;
+        TranslateTransition transition = new TranslateTransition(Duration.millis(1000), carView);
+        if (isVertical) {
+            transition.setByY(crossingDistance);
+        } else {
+            transition.setByX(crossingDistance);
         }
+
+        transition.setOnFinished(event -> Platform.runLater(() -> root.getChildren().remove(carView)));
+
+        transition.play();
     }
+
+    private void animateCarToQueue(ImageView carView, double targetX, double targetY) {
+        double currentX = carView.getX();
+        double currentY = carView.getY();
+        TranslateTransition transition = new TranslateTransition(Duration.millis(500), carView);
+        transition.setByX(targetX - currentX);
+        transition.setByY(targetY - currentY);
+    
+        transition.setOnFinished(event -> {
+            carView.setX(targetX);
+            carView.setY(targetY);
+        });
+    
+        transition.play();
+    }
+    
 
     public void removeCar(int carId) {
-        ImageView carView = carViews.remove(carId);
-        if (carView != null) {
-            Platform.runLater(() -> root.getChildren().remove(carView));
+        if (carId >= 0 && carId < carMap.size()) {
+            ImageView carView = carMap.remove(carId);
+            if (carView != null) {
+                Platform.runLater(() -> root.getChildren().remove(carView));
+            }
         }
     }
 

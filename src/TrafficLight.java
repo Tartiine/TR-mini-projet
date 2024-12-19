@@ -1,8 +1,13 @@
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import javafx.scene.image.ImageView;
 
 //ENUM
 enum LightState {
@@ -52,11 +57,9 @@ public class TrafficLight {
     }
 
     public Car getNextCar() {
-        // Not strictly necessary, but if you manage cars in order
-        // you can pop from the waitingCars queue here.
         lock.lock();
         try {
-            return waitingCars.peek();
+            return waitingCars.peek(); 
         } finally {
             lock.unlock();
         }
@@ -89,6 +92,15 @@ public class TrafficLight {
         lock.lock();
         try {
             return this.lightState == LightState.GREEN;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public List<Car> getAllCars() {
+        lock.lock();
+        try {
+            return new ArrayList<>(waitingCars); 
         } finally {
             lock.unlock();
         }
