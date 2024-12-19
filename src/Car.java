@@ -12,18 +12,20 @@ class Car extends Thread {
     @Override
     public void run() {
         try {
-            assignedLight.waitForGreen();
+            if (assignedLight.tryCross(this)) {
+                assignedLight.waitForGreen();
 
-            intersection.acquireIntersection();
-            try {
-                System.out.println("Car is crossing");
-                assignedLight.removeCar();
+                intersection.acquireIntersection();
+                try {
+                    System.out.println("Car is crossing");
+                    assignedLight.removeCar();
 
-                Thread.sleep(500); 
-                
-                passed = true;
-            } finally {
-                intersection.releaseIntersection();
+                    Thread.sleep(500); 
+                    
+                    passed = true;
+                } finally {
+                    intersection.releaseIntersection();
+                }
             }
         } catch (InterruptedException e) {
         }

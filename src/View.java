@@ -18,10 +18,6 @@ public class View extends Application {
     private ImageView horizontalRedLightView;
     private ImageView horizontalGreenLightView;
 
-    public static void main(String[] args) {
-        launch(args);
-    }
-
     @Override
     public void start(Stage primaryStage) {
         Pane root = new Pane();

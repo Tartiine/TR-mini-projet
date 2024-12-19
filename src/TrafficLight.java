@@ -42,6 +42,15 @@ public class TrafficLight {
         }
     }
 
+    public boolean tryCross(Car car) {
+        lock.lock();
+        try {
+            return waitingCars.peek() == car;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public Car getNextCar() {
         // Not strictly necessary, but if you manage cars in order
         // you can pop from the waitingCars queue here.
@@ -76,12 +85,14 @@ public class TrafficLight {
         }
     }
 
-    public LightState getLightState() {
+    public boolean isGreen() {
         lock.lock();
         try {
-            return this.lightState;
+            return this.lightState == LightState.GREEN;
         } finally {
             lock.unlock();
         }
     }
+
+    
 }
